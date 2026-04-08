@@ -1,0 +1,15 @@
+# Root gitignore
+
+# Server
+server/node_modules/
+server/.env
+server/uploads/
+
+# Client
+client/node_modules/
+client/dist/
+client/.env
+
+# OS Files
+.DS_Store
+Thumbs.db
