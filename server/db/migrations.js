@@ -29,6 +29,7 @@ async function migrate() {
       CREATE TABLE resources (
         id INT AUTO_INCREMENT PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
+        category VARCHAR(100) DEFAULT 'General',
         file_name VARCHAR(255) NOT NULL,
         file_path VARCHAR(255) NOT NULL,
         uploaded_by INT,
@@ -37,6 +38,20 @@ async function migrate() {
       )
     `);
     console.log('Recreated resources table successfully.');
+
+    // 3. Create likes table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS likes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        post_id INT,
+        user_id INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_like (post_id, user_id)
+      )
+    `);
+    console.log('Created likes table successfully.');
 
     process.exit(0);
   } catch (err) {

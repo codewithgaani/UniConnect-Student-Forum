@@ -24,18 +24,19 @@ router.get('/', async (req, res) => {
 // Create a resource with file upload
 router.post('/', auth, upload.single('document'), async (req, res) => {
   try {
-    const { title } = req.body || {};
+    const { title, category } = req.body || {};
     if (!title) return res.status(400).json({ error: 'Title is required' });
     if (!req.file) return res.status(400).json({ error: 'File is required' });
-
+    
+    const resourceCategory = category || 'General';
     const filePath = '/uploads/' + req.file.filename;
 
     const [result] = await db.execute(
-      'INSERT INTO resources (uploaded_by, title, file_name, file_path) VALUES (?, ?, ?, ?)',
-      [req.user.user.id, title, req.file.originalname, filePath]
+      'INSERT INTO resources (uploaded_by, title, category, file_name, file_path) VALUES (?, ?, ?, ?, ?)',
+      [req.user.user.id, title, resourceCategory, req.file.originalname, filePath]
     );
 
-    res.status(201).json({ id: result.insertId, uploaded_by: req.user.user.id, title, file_name: req.file.originalname, file_path: filePath });
+    res.status(201).json({ id: result.insertId, uploaded_by: req.user.user.id, title, category: resourceCategory, file_name: req.file.originalname, file_path: filePath });
   } catch (err) {
     if (err.message === 'File type not supported') {
       return res.status(400).json({ error: 'File type not supported' });
@@ -51,6 +52,27 @@ router.post('/', auth, upload.single('document'), async (req, res) => {
        console.error('Database insertion error:', err);
        return res.status(500).json({ error: 'Database insertion failed' });
     }
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Delete a resource
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const resourceId = req.params.id;
+    const userId = req.user.user.id;
+
+    const [resources] = await db.execute('SELECT uploaded_by FROM resources WHERE id = ?', [resourceId]);
+    if (resources.length === 0) return res.status(404).json({ error: 'Resource not found' });
+    
+    if (resources[0].uploaded_by !== userId && req.user.user.role_id !== 3) {
+      return res.status(403).json({ error: 'Unauthorized to delete this resource' });
+    }
+
+    await db.execute('DELETE FROM resources WHERE id = ?', [resourceId]);
+    res.json({ message: 'Resource deleted successfully' });
+  } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }

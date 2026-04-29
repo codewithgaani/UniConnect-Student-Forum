@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 const api = axios.create({
   baseURL: 'http://localhost:5000/api', // adjust if your server runs on a different port
@@ -26,6 +27,7 @@ api.interceptors.response.use(
       // Clear token and redirect to login if unauthorized
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      toast.error('Session expired. Please log in again.');
       window.location.href = '/login';
     }
     return Promise.reject(error);
