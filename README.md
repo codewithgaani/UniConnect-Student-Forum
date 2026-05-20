@@ -86,3 +86,4 @@ UniConnect/
 │   └── uploads/            # Local storage for uploaded resources
 └── README.md
 ```
+TODO:Deploy on Vercel/University erp.
